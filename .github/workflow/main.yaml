@@ -1,6 +1,11 @@
 name: Run tests with Tox
 
-on: [push]
+on:
+  push:
+    branch: [ main ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches: [ main ]
 
 jobs:
   unit-tests:
