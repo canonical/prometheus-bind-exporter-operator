@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 name: prometheus-bind-exporter
 description: |
-  The subordinate charm for the designate-bind charm, which provide the
+  The subordinate charm for the designate-bind charm, which provides the
   prometheus-bind-exporter snap to collect metrics about BIND v9+. At the same
   time, it provides an opportunity to create a relation with prometheus2 and
   grafana charm.
@@ -22,10 +22,10 @@ requires:
     scope: container
 
 provides:
-  prometheus-bind-exporter:
-    interface: prometheus-bind-exporter
+  designate-bind:
+    interface: bind-exporter
     scope: container
-  bind-exporter:
+  prometheus-bind-exporter:
     interface: http
   grafana:
     interface: grafana-dashboard

@@ -2,7 +2,7 @@
 
 ## Description
 
-The subordinate charm for the designate-bind charm, which provide the
+The subordinate charm for the designate-bind charm, which provides the
 prometheus-bind-exporter snap to collect metrics about BIND v9+. At the same
 time, it provides an opportunity to create a relation with prometheus2 and
 grafana charm.
