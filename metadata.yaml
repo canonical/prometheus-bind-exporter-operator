@@ -1,6 +1,6 @@
 # Copyright 2021 Unicorn
 # See LICENSE file for licensing details.
-name: prometheus-bind-exporter-operator
+name: prometheus-bind-exporter
 description: |
   The subordinate charm for the designate-bind charm, which provide the
   prometheus-bind-exporter snap to collect metrics about BIND v9+. At the same
