@@ -2,18 +2,30 @@
 # See LICENSE file for licensing details.
 name: prometheus-bind-exporter-operator
 description: |
-  TEMPLATE-TODO: fill out the charm's description
+  The subordinate charm for the designate-bind charm, which provide the
+  prometheus-bind-exporter snap to collect metrics about BIND v9+. At the same
+  time, it provides an opportunity to create a relation with prometheus2 and
+  grafana charm.
 summary: |
-  TEMPLATE-TODO: fill out the charm's summary
+  Export BIND (named/dns) v9+ service metrics to Prometheus.
 
-# TEMPLATE-TODO: replace with containers for your workload (delete for non-k8s)
-containers:
-  httpbin:
-    resource: httpbin-image
+subordinate: true
 
-# TEMPLATE-TODO: each container defined above must specify an oci-image resource
 resources:
-  httpbin-image:
-    type: oci-image
-    description: OCI image for httpbin (kennethreitz/httpbin)
+  prometheus-bind-exporter:
+    type: file
+    filename: promethues-bind.exporter.snap
 
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
+
+provides:
+  prometheus-bind-exporter:
+    interface: prometheus-bind-exporter
+    scope: container
+  bind-exporter:
+    interface: http
+  grafana:
+    interface: grafana-dashboard

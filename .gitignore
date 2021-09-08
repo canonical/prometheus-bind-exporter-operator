@@ -1,7 +1,11 @@
 venv/
 build/
 *.charm
+*.snap
 
 .coverage
 __pycache__/
 *.py[cod]
+
+# PyCharm
+.idea/

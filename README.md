@@ -2,11 +2,29 @@
 
 ## Description
 
-TODO: Describe your charm in a few paragraphs of Markdown
+The subordinate charm for the designate-bind charm, which provide the
+prometheus-bind-exporter snap to collect metrics about BIND v9+. At the same
+time, it provides an opportunity to create a relation with prometheus2 and
+grafana charm.
+For more information about prometheus-bind-exporter visit 
+[prometheus-community/bind-export].
 
 ## Usage
 
-TODO: Provide high-level usage, such as required config or relations
+Deploy along with the [cs:designate-bind] charm.
+
+    juju deploy prometheus-bind-exporter-operator bind-exporter
+    juju relate designate-bind:prometheus-bind-exporter bind-exporter:prometheus-bind-exporter
+
+Relate with [cs:prometheus2] charm creates a new target in prometheus.
+
+    juju relate prometheus2:target bind-exporter:bind-exporter
+
+Relate with [cs:grafana] charm creates a new dashboard, which requires
+prometheus as a source. 
+
+    juju relate prometheus2:grafana-source grafana:grafana-source  
+    juju relate grafana:dashboard bind-exporter:grafana
 
 
 ## Developing
@@ -23,3 +41,9 @@ The Python operator framework includes a very nice harness for testing
 operator behaviour without full deployment. Just `run_tests`:
 
     ./run_tests
+
+---
+[prometheus-community/bind-exporter]: https://github.com/prometheus-community/bind_exporter
+[cs:designate-bind]: https://jaas.ai/designate-bind
+[cs:prometheus2]: https://jaas.ai/prometheus2
+[cs:grafana]: https://jaas.ai/grafana
