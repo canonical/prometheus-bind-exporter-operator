@@ -1,4 +1,16 @@
 # Copyright 2021 Unicorn
 # See LICENSE file for licensing details.
 
-options: {}
+options:
+  exporter-listen-port:
+    type: int
+    default: 9119
+    description: |
+      The prometheus-bind-exporter port to listen on for web interface and
+      telemetry.
+  exporter-stats-groups:
+    type: string
+    default: "server,view,tasks"
+    description: |
+      Comma-separated list of statistics to collect by the
+      prometheus-bind-exporter.
