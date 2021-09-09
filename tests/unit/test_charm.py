@@ -8,8 +8,7 @@ from unittest import mock
 
 import charm
 from ops.testing import Harness
-
-from build.venv.ops.model import ActiveStatus
+from ops.model import ActiveStatus
 
 
 class TestInitCharm(unittest.TestCase):
@@ -18,24 +17,38 @@ class TestInitCharm(unittest.TestCase):
         harness = Harness(charm.PrometheusBindExporterOperatorCharm)
         harness.begin()
 
-        self.assertNotEqual(harness.charm.unit.status, ActiveStatus("Unit is ready"))
+        self.assertEqual(harness.charm.unit.status, ActiveStatus("Unit is ready"))
 
 
 class TestCharm(unittest.TestCase):
+
+    def patch(self, obj, method):
+        """Mock the method."""
+        _patch = mock.patch.object(obj, method)
+        mock_method = _patch.start()
+        self.addCleanup(_patch.stop)
+        return mock_method
+
     def setUp(self):
         self.harness = Harness(charm.PrometheusBindExporterOperatorCharm)
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
+        # mock subprocess
+        self.mock_subprocess = self.patch(charm, "subprocess")
+        # mock getting private address
+        mock_get_binding = self.patch(self.harness.model, "get_binding")
+        mock_get_binding.return_value = self.mock_binding = mock.MagicMock()
+        self.mock_binding.network.bind_address = "127.0.0.1"
+        # mock fetch resource
+        self.mock_fetch = self.patch(self.harness.model.resources, "fetch")
+        self.mock_fetch.return_value = "prometheus-bind-exporter.snap"
 
-    @mock.patch.object(charm, "subprocess")
-    def test_on_install(self, mock_subprocess):
+    def test_on_install(self):
         """Test install hook."""
-        with mock.patch.object(self.harness.model.resources, "fetch") as mock_fetch:
-            mock_fetch.return_value = "test"
-            self.harness.charm.on.install.emit()
+        exp_call = mock.call(["snap", "install", "--dangerous",
+                              "prometheus-bind-exporter.snap"])
+        self.harness.charm.on.install.emit()
 
-            mock_fetch.assert_called_once_with("prometheus-bind-exporter")
-            mock_subprocess.check_call.assert_called_once_with(["snap", "install",
-                                                                "--dangerous", "test"])
-            self.assertNotEqual(self.harness.charm.unit.status,
-                                ActiveStatus("Unit is ready"))
+        self.mock_fetch.assert_called_once_with("prometheus-bind-exporter")
+        self.assertIn(exp_call, self.mock_subprocess.check_call.mock_calls)
+        self.assertEqual(self.harness.charm.unit.status, ActiveStatus("Unit is ready"))
