@@ -17,15 +17,12 @@ resources:
     filename: promethues-bind.exporter.snap
 
 requires:
-  juju-info:
-    interface: juju-info
+  bind-stats:
+    interface: bind-client
     scope: container
 
 provides:
-  designate-bind:
-    interface: bind-exporter
-    scope: container
-  prometheus-bind-exporter:
+  bind-exporter:
     interface: http
   grafana:
     interface: grafana-dashboard
