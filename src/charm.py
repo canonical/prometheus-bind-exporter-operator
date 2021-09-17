@@ -46,7 +46,9 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
     def _manage_prometheus_bind_exporter_service(self):
         """Manage the prometheus-bind-exporter service."""
-        logger.debug("prometheus-bind-exporter configuration in progress")
+        logger.debug("prometheus-bind-exporter configuration [web.listen-address=%s:%s, "
+                     "web.stats-groups=%s] in progress", self.private_address or "",
+                     self._stored.listen_port, self._stored.stats_groups)
         subprocess.check_call([
             "snap", "set", "prometheus-bind-exporter",
             f"web.listen-address={self.private_address or ''}:{self._stored.listen_port}",
@@ -56,7 +58,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
     @property
     def private_address(self) -> str:
-        """Returning the private address of unit."""
+        """Return the private address of unit."""
         address: IPv4Address = self.model.get_binding("bind-stats").network.bind_address
         return str(address)
 
@@ -90,7 +92,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
         This hook will ensure the creation of a new target in Prometheus.
         """
-        logger.info("Registering new `%s` target in Prometheus.", self.unit.name)
+        logger.info("Shared relation data with %s", self.unit.name)
         event.relation.data[self.unit].update({
             "hostname": self.private_address, "port": str(self._stored.listen_port)
         })
@@ -100,7 +102,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
         This hook will ensure the deletion of the target in Prometheus.
         """
-        logger.info("Removing `%s` target from Prometheus.")
+        logger.info("Removing %s target from Prometheus.")
         event.relation.data[self.unit].clear()
 
 
