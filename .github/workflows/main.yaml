@@ -2,7 +2,7 @@ name: Run tests with Tox
 
 on:
   push:
-    branch: [ main ]
+    branches: [ main ]
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches: [ main ]
