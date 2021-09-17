@@ -1,1 +1,4 @@
-ops >= 1.2.0
+# NOTE (rgildein): This is required due to the use of harness.remove_relation, which is
+#                  not yet part of the latest release. This can be deleted after a new
+#                  release.
+git+https://github.com/canonical/operator.git#egg=ops
