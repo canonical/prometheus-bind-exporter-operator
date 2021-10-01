@@ -41,6 +41,8 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
                                self._on_prometheus_relation_departed)
         self.framework.observe(self.on.grafana_relation_joined,
                                self._on_grafana_relation_joined)
+        self.framework.observe(self.on.grafana_relation_changed,
+                               self._on_grafana_relation_joined)
         # initialise stored data
         self._stored.set_default(listen_port=DEFAULT_LISTEN_PORT,
                                  stats_groups=DEFAULT_STATS_GROUPS,)
