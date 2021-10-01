@@ -116,7 +116,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
         This hook will ensure the creation of a new target in Prometheus.
         """
         if self.model.get_relation("bind-stats") is None:
-            self.unit.status = BlockedStatus("bind-stats relation not available")
+            self.unit.status = BlockedStatus("Subordinate relation not available.")
             return
 
         logger.info("Shared relation data with %s", self.unit.name)
@@ -129,7 +129,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
         This hook will ensure the deletion of the target in Prometheus.
         """
-        logger.info("Removing %s target from Prometheus.")
+        logger.info("Removing %s target from Prometheus." % self.unit)
         event.relation.data[self.unit].clear()
 
     def _on_grafana_relation_joined(self, event: RelationJoinedEvent):
