@@ -118,7 +118,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
         This hook will ensure the creation of a new target in Prometheus.
         """
         if self.model.get_relation("bind-stats") is None:
-            self.unit.status = BlockedStatus("Subordinate relation not available.")
+            self.unit.status = BlockedStatus("bind-stats relation not available.")
             return
 
         logger.info("Shared relation data with %s", self.unit.name)
@@ -145,13 +145,13 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
             return
 
         if self.model.get_relation("bind-stats") is None:
-            logger.warning("Subordinate relation not available. Skipping Grafana configuration.")
-            self.unit.status = BlockedStatus("Subordinate relation not available.")
+            logger.warning("bind-stats relation not available. Skipping Grafana configuration.")
+            self.unit.status = BlockedStatus("bind-stats relation not available.")
             return
 
         if self.model.get_relation("bind-exporter") is None:
-            logger.warning("Prometheus relation not available. Skipping Grafana configuration.")
-            self.unit.status = BlockedStatus("Prometheus relation not available.")
+            logger.warning("bind-exporter relation not available. Skipping Grafana configuration.")
+            self.unit.status = BlockedStatus("bind-exporter relation not available.")
             return
 
         event.relation.data[self.unit].update({"dashboard": self._render_grafana_dashboard()})

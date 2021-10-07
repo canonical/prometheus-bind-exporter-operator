@@ -161,7 +161,7 @@ class TestCharmHooks(TestCharm):
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
         self.assertEqual(self.harness.charm.unit.status.message,
-                         "Subordinate relation not available.")
+                         "bind-stats relation not available.")
 
     def test_on_prometheus_relation_departed(self):
         """Test Prometheus relation changed hook."""
@@ -206,7 +206,7 @@ class TestCharmHooks(TestCharm):
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
         self.assertEqual(self.harness.charm.unit.status.message,
-                         "Prometheus relation not available.")
+                         "bind-exporter relation not available.")
 
         # test without bind-stats relation
         self.harness.remove_relation(self.bind_stats_relation_id)
@@ -216,4 +216,4 @@ class TestCharmHooks(TestCharm):
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
         self.assertEqual(self.harness.charm.unit.status.message,
-                         "Subordinate relation not available.")
+                         "bind-stats relation not available.")
