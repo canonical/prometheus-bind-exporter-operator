@@ -63,6 +63,9 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
     def _render_grafana_dashboard(self) -> str:
         """Render jinja2 template for Grafana dashboard."""
+        # NOTE (rgildein): After resolving the following bug [1], this function should
+        # be replaced with a built-in one in Operator Framework.
+        # [1]: https://github.com/canonical/operator/issues/228
         parent_app_name = self.model.get_relation("bind-stats").app.name
         prometheus_app_name = self.model.get_relation("bind-exporter").app.name
 
@@ -75,7 +78,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
         }
         templates = jinja2.Environment(
             loader=jinja2.FileSystemLoader(self.charm_dir / "templates"),
-            variable_start_string="<<",
+            variable_start_string="<< ",
             variable_end_string=" >>",
         )
         template = templates.get_template("bind-grafana-dashboard.json.j2")
