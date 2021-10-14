@@ -4,17 +4,17 @@
 #
 # Learn more at: https://juju.is/docs/sdk
 
-"""Prometheus-bind-exporter as charm the service.
-"""
-
+"""Prometheus-bind-exporter as charm the service."""
 import logging
+import socket
 import subprocess
 from ipaddress import IPv4Address
 
-from ops.charm import CharmBase, RelationChangedEvent, RelationDepartedEvent
+import jinja2
+from ops.charm import CharmBase, RelationChangedEvent, RelationDepartedEvent, RelationJoinedEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, MaintenanceStatus
+from ops.model import ActiveStatus, MaintenanceStatus, BlockedStatus
 
 logger = logging.getLogger(__name__)
 
@@ -29,15 +29,20 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
+        # hooks
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        # relation
+        # relation hooks
         self.framework.observe(self.on.bind_exporter_relation_joined,
                                self._on_bind_exporter_relation_changed)
         self.framework.observe(self.on.bind_exporter_relation_changed,
                                self._on_bind_exporter_relation_changed)
         self.framework.observe(self.on.bind_exporter_relation_departed,
                                self._on_prometheus_relation_departed)
+        self.framework.observe(self.on.grafana_relation_joined,
+                               self._on_grafana_relation_joined)
+        self.framework.observe(self.on.grafana_relation_changed,
+                               self._on_grafana_relation_joined)
         # initialise stored data
         self._stored.set_default(listen_port=DEFAULT_LISTEN_PORT,
                                  stats_groups=DEFAULT_STATS_GROUPS,)
@@ -55,6 +60,29 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
             f"web.stats-groups={self._stored.stats_groups}"
         ])
         logger.info("prometheus-bind-exporter has been reconfigured")
+
+    def _render_grafana_dashboard(self) -> str:
+        """Render jinja2 template for Grafana dashboard."""
+        # NOTE (rgildein): After resolving the following bug [1], this function should
+        # be replaced with a built-in one in Operator Framework.
+        # [1]: https://github.com/canonical/operator/issues/228
+        parent_app_name = self.model.get_relation("bind-stats").app.name
+        prometheus_app_name = self.model.get_relation("bind-exporter").app.name
+
+        context = {
+            "datasource": f"{prometheus_app_name} - Juju generated source",
+            "machine_name": socket.gethostname(),
+            "app_name": self.app.name,
+            "parent_app_name": parent_app_name,
+            "prometheus_app_name": prometheus_app_name,
+        }
+        templates = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(self.charm_dir / "templates"),
+            variable_start_string="<< ",
+            variable_end_string=" >>",
+        )
+        template = templates.get_template("bind-grafana-dashboard.json.j2")
+        return template.render(context)
 
     @property
     def private_address(self) -> str:
@@ -92,6 +120,10 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
         This hook will ensure the creation of a new target in Prometheus.
         """
+        if self.model.get_relation("bind-stats") is None:
+            self.unit.status = BlockedStatus("bind-stats relation not available.")
+            return
+
         logger.info("Shared relation data with %s", self.unit.name)
         event.relation.data[self.unit].update({
             "hostname": self.private_address, "port": str(self._stored.listen_port)
@@ -102,8 +134,30 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
 
         This hook will ensure the deletion of the target in Prometheus.
         """
-        logger.info("Removing %s target from Prometheus.")
+        logger.info("Removing %s target from Prometheus." % self.unit)
         event.relation.data[self.unit].clear()
+
+    def _on_grafana_relation_joined(self, event: RelationJoinedEvent):
+        """Grafana relation joined hook.
+
+        This hook will ensure the creation of a new dashboard in Grafana.
+        """
+        if not self.unit.is_leader():
+            logger.debug("Grafana relation must be run on the leader unit. Skipping Grafana "
+                         "configuration.")
+            return
+
+        if self.model.get_relation("bind-stats") is None:
+            logger.warning("bind-stats relation not available. Skipping Grafana configuration.")
+            self.unit.status = BlockedStatus("bind-stats relation not available.")
+            return
+
+        if self.model.get_relation("bind-exporter") is None:
+            logger.warning("bind-exporter relation not available. Skipping Grafana configuration.")
+            self.unit.status = BlockedStatus("bind-exporter relation not available.")
+            return
+
+        event.relation.data[self.unit].update({"dashboard": self._render_grafana_dashboard()})
 
 
 if __name__ == "__main__":
