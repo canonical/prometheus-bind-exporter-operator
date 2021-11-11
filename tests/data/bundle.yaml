@@ -1,0 +1,32 @@
+series: {{ series }}
+applications:
+  designate-bind:
+    charm: cs:~gabrielcocenza/designate-bind-0
+    num_units: 1
+    to: ["0"]
+  prometheus-bind-exporter:
+    charm: {{ main_charm }}
+  prometheus2:
+    charm: cs:prometheus2
+    num_units: 1
+    to: ["1"]
+  grafana:
+    charm: cs:grafana
+    num_units: 1
+    to: ["2"]
+machines:
+  "0":
+    constraints: arch=amd64
+  "1":
+    constraints: arch=amd64
+  "2":
+    constraints: arch=amd64
+relations:
+- - prometheus-bind-exporter:bind-stats
+  - designate-bind:bind-stats
+- - prometheus-bind-exporter:bind-exporter
+  - prometheus2:target
+- - grafana:grafana-source
+  - prometheus2:grafana-source
+- - prometheus-bind-exporter:grafana
+  - grafana:dashboards
