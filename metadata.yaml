@@ -11,11 +11,6 @@ summary: |
 
 subordinate: true
 
-resources:
-  prometheus-bind-exporter:
-    type: file
-    filename: promethues-bind.exporter.snap
-
 requires:
   bind-stats:
     interface: bind-client
