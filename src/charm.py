@@ -93,7 +93,7 @@ class PrometheusBindExporterOperatorCharm(CharmBase):
     def _on_install(self, _):
         """Installation hook that installs prometheus-bind-exporter daemon."""
         self.unit.status = MaintenanceStatus("Installing prometheus-bind-exporter")
-        subprocess.check_call(["snap", "install", "prometheus-bind-exporter", "--candidate"])
+        subprocess.check_call(["snap", "install", "prometheus-bind-exporter", "--stable"])
         self._manage_prometheus_bind_exporter_service()
         self.unit.status = ActiveStatus("Unit is ready")
 

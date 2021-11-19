@@ -106,7 +106,7 @@ class TestCharmHooks(TestCharm):
 
     def test_on_install(self):
         """Test install hook."""
-        exp_call = mock.call(["snap", "install", "prometheus-bind-exporter", "--candidate"])
+        exp_call = mock.call(["snap", "install", "prometheus-bind-exporter", "--stable"])
         self.harness.charm.on.install.emit()
 
         self.assertIn(exp_call, self.mock_subprocess.check_call.mock_calls)
