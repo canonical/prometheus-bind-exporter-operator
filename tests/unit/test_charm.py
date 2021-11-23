@@ -51,9 +51,6 @@ class TestCharmHooks(TestCharm):
         mock_get_binding = self.patch(self.harness.model, "get_binding")
         mock_get_binding.return_value = self.mock_binding = mock.MagicMock()
         self.mock_binding.network.bind_address = "127.0.0.1"
-        # mock fetch resource
-        self.mock_fetch = self.patch(self.harness.model.resources, "fetch")
-        self.mock_fetch.return_value = "prometheus-bind-exporter.snap"
         # required relations
         self.bind_stats_relation_id = self._add_relation("bind-stats", "designate-bind")
 
@@ -109,11 +106,9 @@ class TestCharmHooks(TestCharm):
 
     def test_on_install(self):
         """Test install hook."""
-        exp_call = mock.call(["snap", "install", "--dangerous",
-                              "prometheus-bind-exporter.snap"])
+        exp_call = mock.call(["snap", "install", "prometheus-bind-exporter", "--stable"])
         self.harness.charm.on.install.emit()
 
-        self.mock_fetch.assert_called_once_with("prometheus-bind-exporter")
         self.assertIn(exp_call, self.mock_subprocess.check_call.mock_calls)
         self.assert_active_unit(self.harness.charm.unit)
 
