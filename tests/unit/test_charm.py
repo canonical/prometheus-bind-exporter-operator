@@ -20,7 +20,6 @@ class TestCharm(unittest.TestCase):
 
 
 class TestInitCharm(TestCharm):
-
     def test_init(self):
         """Test initialization of charm."""
         harness = Harness(charm.PrometheusBindExporterOperatorCharm)
@@ -30,7 +29,6 @@ class TestInitCharm(TestCharm):
 
 
 class TestCharmHooks(TestCharm):
-
     def patch(self, obj, method):
         """Mock the method."""
         _patch = mock.patch.object(obj, method)
@@ -65,9 +63,14 @@ class TestCharmHooks(TestCharm):
         self.harness.charm._manage_prometheus_bind_exporter_service()
 
         self.mock_subprocess.check_call.assert_called_once_with(
-            ["snap", "set", "prometheus-bind-exporter",
-             "web.listen-address=127.0.0.1:9119",
-             "web.stats-groups=server,view,tasks"])
+            [
+                "snap",
+                "set",
+                "prometheus-bind-exporter",
+                "web.listen-address=127.0.0.1:9119",
+                "web.stats-groups=server,view,tasks",
+            ]
+        )
 
     def test_render_grafana_dashboard(self):
         """Test render the Grafana dashboard template."""
@@ -79,7 +82,7 @@ class TestCharmHooks(TestCharm):
             "machine_name": "<< machine_name >>",
             "app_name": "<< app_name >>",
             "parent_app_name": "<< parent_app_name >>",
-            "prometheus_app_name": "<< prometheus_app_name >>"
+            "prometheus_app_name": "<< prometheus_app_name >>",
         }
         with TemporaryDirectory() as tmp_dir:
             tmp_dir = Path(tmp_dir)
@@ -91,13 +94,16 @@ class TestCharmHooks(TestCharm):
             self.harness.charm.framework.charm_dir = tmp_dir
             dashboard = self.harness.charm._render_grafana_dashboard()
 
-        self.assertDictEqual(json.loads(dashboard), {
-            "datasource": "prometheus2 - Juju generated source",
-            "machine_name": self.hostname,
-            "app_name": "prometheus-bind-exporter",
-            "parent_app_name": "designate-bind",
-            "prometheus_app_name": "prometheus2",
-        })
+        self.assertDictEqual(
+            json.loads(dashboard),
+            {
+                "datasource": "prometheus2 - Juju generated source",
+                "machine_name": self.hostname,
+                "app_name": "prometheus-bind-exporter",
+                "parent_app_name": "designate-bind",
+                "prometheus_app_name": "prometheus2",
+            },
+        )
 
     def test_private_address(self):
         """Test help function to get private address."""
@@ -106,7 +112,9 @@ class TestCharmHooks(TestCharm):
 
     def test_on_install(self):
         """Test install hook."""
-        exp_call = mock.call(["snap", "install", "prometheus-bind-exporter", "--stable"])
+        exp_call = mock.call(
+            ["snap", "install", "prometheus-bind-exporter", "--stable"]
+        )
         self.harness.charm.on.install.emit()
 
         self.assertIn(exp_call, self.mock_subprocess.check_call.mock_calls)
@@ -115,23 +123,31 @@ class TestCharmHooks(TestCharm):
     def test_on_config_changed(self):
         """Test config-changed hook."""
         # this will trigger self.harness.charm.on.config_changed.emit()
-        self.harness.update_config({"exporter-listen-port": "9120",
-                                    "exporter-stats-groups": "server"})
+        self.harness.update_config(
+            {"exporter-listen-port": 9120, "exporter-stats-groups": "server"}
+        )
 
-        self.assertEqual(self.harness.charm._stored.listen_port, "9120")
+        self.assertEqual(self.harness.charm._stored.listen_port, 9120)
         self.assertEqual(self.harness.charm._stored.stats_groups, "server")
         self.mock_subprocess.check_call.assert_called_once_with(
-            ["snap", "set", "prometheus-bind-exporter",
-             "web.listen-address=127.0.0.1:9120",
-             "web.stats-groups=server"])
+            [
+                "snap",
+                "set",
+                "prometheus-bind-exporter",
+                "web.listen-address=127.0.0.1:9120",
+                "web.stats-groups=server",
+            ]
+        )
         self.assert_active_unit(self.harness.charm.unit)
 
     def test_on_config_changed_with_bind_exporter_relation(self):
         """Test config-changed hook with existing bind-exporter relation."""
         relation_id = self._add_relation("bind-exporter", "prometheus2")
-        self.harness.update_config({"exporter-listen-port": "9120"})
+        self.harness.update_config({"exporter-listen-port": 9120})
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {"hostname": "127.0.0.1", "port": "9120"})
         self.assert_active_unit(self.harness.charm.unit)
 
@@ -141,7 +157,9 @@ class TestCharmHooks(TestCharm):
         # update relation -> trigger bind_exporter_relation_changed hook
         self.harness.update_relation_data(relation_id, "prometheus2/0", {})
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {"hostname": "127.0.0.1", "port": "9119"})
         self.assert_active_unit(self.harness.charm.unit)
 
@@ -152,11 +170,14 @@ class TestCharmHooks(TestCharm):
         # update relation -> trigger bind_exporter_relation_changed hook
         self.harness.update_relation_data(relation_id, "prometheus2/0", {})
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
-        self.assertEqual(self.harness.charm.unit.status.message,
-                         "bind-stats relation not available.")
+        self.assertEqual(
+            self.harness.charm.unit.status.message, "bind-stats relation not available."
+        )
 
     def test_on_prometheus_relation_departed(self):
         """Test Prometheus relation changed hook."""
@@ -169,7 +190,9 @@ class TestCharmHooks(TestCharm):
 
     def test_on_grafana_relation_joined(self):
         """Test Grafana relation joined hook."""
-        mock_render_grafana_dashboard = self.patch(self.harness.charm, "_render_grafana_dashboard")
+        mock_render_grafana_dashboard = self.patch(
+            self.harness.charm, "_render_grafana_dashboard"
+        )
         mock_render_grafana_dashboard.return_value = "test-dashboard"
         self.harness.set_leader(True)
         _ = self._add_relation("bind-exporter", "prometheus2")
@@ -177,7 +200,9 @@ class TestCharmHooks(TestCharm):
         relation_id = self._add_relation("grafana", "grafana")
 
         mock_render_grafana_dashboard.assert_called_once()
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {"dashboard": "test-dashboard"})
         self.assert_active_unit(self.harness.charm.unit)
 
@@ -186,7 +211,9 @@ class TestCharmHooks(TestCharm):
         self.harness.set_leader(False)
         relation_id = self._add_relation("grafana", "grafana")
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {})
         self.assert_active_unit(self.harness.charm.unit)
 
@@ -197,18 +224,25 @@ class TestCharmHooks(TestCharm):
         # test without bind-exporter relation
         relation_id = self._add_relation("grafana", "grafana")
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
-        self.assertEqual(self.harness.charm.unit.status.message,
-                         "bind-exporter relation not available.")
+        self.assertEqual(
+            self.harness.charm.unit.status.message,
+            "bind-exporter relation not available.",
+        )
 
         # test without bind-stats relation
         self.harness.remove_relation(self.bind_stats_relation_id)
         relation_id = self._add_relation("grafana", "grafana")
 
-        relation_data = self.harness.get_relation_data(relation_id, self.harness.charm.unit.name)
+        relation_data = self.harness.get_relation_data(
+            relation_id, self.harness.charm.unit.name
+        )
         self.assertDictEqual(relation_data, {})
         self.assertEqual(self.harness.charm.unit.status.name, "blocked")
-        self.assertEqual(self.harness.charm.unit.status.message,
-                         "bind-stats relation not available.")
+        self.assertEqual(
+            self.harness.charm.unit.status.message, "bind-stats relation not available."
+        )
